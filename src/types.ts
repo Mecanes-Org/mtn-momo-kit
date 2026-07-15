@@ -2,6 +2,9 @@ export type Environment = 'sandbox' | 'production'
 
 export interface MomoConfig {
   subscriptionKey: string
+  collectionSubscriptionKey?: string
+  disbursementSubscriptionKey?: string
+  remittanceSubscriptionKey?: string
   apiUser: string
   apiKey: string
   environment?: Environment
@@ -14,6 +17,10 @@ export interface TokenResponse {
   expires_in: number
 }
 
+export interface ApiKeyResponse {
+  apiKey: string
+}
+
 export interface RequestToPayParams {
   amount: string
   currency: string
@@ -21,6 +28,7 @@ export interface RequestToPayParams {
   payer: Party
   payerMessage?: string
   payeeNote?: string
+  callbackUrl?: string
 }
 
 export interface Party {
@@ -35,6 +43,7 @@ export interface TransferParams {
   payee: Party
   payerMessage?: string
   payeeNote?: string
+  callbackUrl?: string
 }
 
 export interface TransactionStatus {
@@ -59,7 +68,30 @@ export interface AccountHolderStatus {
   reason?: string
 }
 
+export interface BasicUserInfo {
+  given_name?: string
+  family_name?: string
+  birthdate?: string
+  locale?: string
+  phone_number?: string
+  country?: string
+  email?: string
+}
+
 export interface MomoError {
   code: string
   message: string
+}
+
+export interface MomoWebhookPayload {
+  referenceId: string
+  status: 'SUCCESSFUL' | 'FAILED' | 'PENDING'
+  amount?: string
+  currency?: string
+  financialTransactionId?: string
+  externalId?: string
+  payer?: Party
+  reason?: Record<string, unknown>
+  payeeNote?: string
+  payerMessage?: string
 }

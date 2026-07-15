@@ -1,20 +1,39 @@
 # MTN MoMo SDK
 
-SDK TypeScript universel pour l'API MTN Mobile Money (MoMo). Compatible **Node.js**, **React Native**, **Expo**, et **navigateur (Vite, Next.js, etc.)**.
+Universal TypeScript SDK for the MTN Mobile Money (MoMo) API. Compatible with **Node.js**, **React Native**, **Expo**, and **browsers (Vite, Next.js, etc.)**.
 
-## Table des matières
+## Table of Contents
 
 - [Installation](#installation)
+- [Getting your credentials](#getting-your-credentials)
+- [Quick Start](#quick-start)
+- [Provisioning](#provisioning)
+  - [Create an API User](#1-create-an-api-user)
+  - [Generate an API Key](#2-generate-an-api-key)
 - [Configuration](#configuration)
-- [Utilisation](#utilisation)
+- [Usage](#usage)
   - [Collections](#collections)
   - [Disbursements](#disbursements)
   - [Remittances](#remittances)
-- [Référence de l'API](#référence-de-lapi)
-- [Tests Sandbox](#tests-sandbox)
-- [Passage en Production](#passage-en-production)
-- [Gestion des Erreurs](#gestion-des-erreurs)
+- [Webhooks](#webhooks)
+- [API Reference](#api-reference)
+- [Sandbox Testing](#sandbox-testing)
+- [Going to Production](#going-to-production)
+- [Error Handling](#error-handling)
 - [FAQ](#faq)
+
+---
+
+## Prerequisites
+
+Before you start, make sure you have:
+
+- **Node.js 18+** (or React Native 0.71+, or a modern browser)
+- **npm** (or your package manager of choice)
+- **An MTN MoMo developer account** — [create one for free](https://momodeveloper.mtn.com)
+- **A Primary Key** from subscribing to a product on the portal (see [Getting your credentials](#getting-your-credentials))
+
+> **Don't have an account yet?** Follow steps 1–3 in [Getting your credentials](#getting-your-credentials) first, then come back here.
 
 ---
 
@@ -24,22 +43,208 @@ SDK TypeScript universel pour l'API MTN Mobile Money (MoMo). Compatible **Node.j
 npm install mtn-momo-sdk
 ```
 
-Le SDK ne dépend d'aucune dépendance externe. Il utilise uniquement l'API `fetch` native, disponible dans Node.js 18+, React Native 0.71+, et tous les navigateurs modernes.
+The SDK only depends on `base-64` (1kB) for cross-platform Base64 encoding. All other APIs used (`fetch`, `crypto`) are native, available in Node.js 18+, React Native 0.71+, and all modern browsers.
+
+---
+
+## Getting your credentials
+
+Before using the SDK, you need to get your API credentials from MTN. Follow these steps:
+
+### 1. Create an account
+
+Go to [momodeveloper.mtn.com](https://momodeveloper.mtn.com) and create a developer account.
+
+### 2. Subscribe to a product
+
+Once logged in, click on **Products** and subscribe to the product you need:
+
+| Product | Use case |
+|---|---|
+| **Collections** | Receive payments from customers |
+| **Disbursements** | Send money to users (refunds, payouts) |
+| **Remittances** | Cross-border transfers |
+
+> Each product has its own **Primary Key**. Subscribe to each one you need.
+
+### 3. Get your Primary Key
+
+After subscribing, go to your **Profile** (top-right menu) → scroll down to the bottom of the page. You will see your product keys:
+
+```
+Primary Key:    d7de09f262644dfda901161d97d741a6
+Secondary Key:  8a3f1b2c3d4e5f6a7b8c9d0e1f2a3b4c
+```
+
+| Key | Usage |
+|---|---|
+| **Primary Key** → `subscriptionKey` | Used in your code |
+| **Secondary Key** | Backup for key rotation — same permissions as Primary |
+
+> The Secondary Key exists so you can **rotate** your Primary Key without downtime: switch to Secondary, regenerate Primary, then switch back.
+
+**`subscriptionKey` = Primary Key**
+
+### 4. Create an API User & Key
+
+You have two options:
+
+<details>
+<summary><b>Option A — With the SDK (recommended)</b></summary>
+
+```ts
+import { v4 as uuid } from 'uuid'
+import { Momo } from 'mtn-momo-sdk'
+
+// Create API User
+const apiUser = uuid()
+await Momo.createApiUser('YOUR_PRIMARY_KEY', apiUser, 'https://your-site.com/webhook')
+console.log('API User:', apiUser)
+
+// Generate API Key
+const apiKey = await Momo.generateApiKey('YOUR_PRIMARY_KEY', apiUser)
+console.log('API Key:', apiKey)
+```
+
+**`apiUser` = the UUID you generated**
+**`apiKey` = the key returned by `generateApiKey()`**
+</details>
+
+<details>
+<summary><b>Option B — Via the Portal</b></summary>
+
+1. Go to **API User** section in the portal
+2. Click **Create API User** and generate an API Key
+3. Copy both the API User UUID and the API Key
+</details>
+
+### 5. You're ready!
+
+You now have all three credentials:
+
+```
+subscriptionKey → Primary Key
+apiUser         → UUID from step 4
+apiKey          → Key from step 4
+```
+
+---
+
+## Quick Start
+
+```ts
+import { Momo } from 'mtn-momo-sdk'
+
+const momo = new Momo({
+  subscriptionKey: 'your_primary_key',           // Default key for all products
+  // Or per-product keys:
+  // collectionSubscriptionKey: '...',
+  // disbursementSubscriptionKey: '...',
+  // remittanceSubscriptionKey: '...',
+  apiUser: 'your_api_user',
+  apiKey: 'your_api_key',
+  environment: 'sandbox',
+})
+
+// Check your balance
+const balance = await momo.collections.getBalance()
+console.log(`${balance.availableBalance} ${balance.currency}`)
+```
+
+---
+
+## Provisioning
+
+Before using the SDK, you need an **API User** and an **API Key**. In the sandbox environment, you can create them directly with the SDK. In production, MTN provides them after KYC.
+
+> ⚠️ **Important**: Each product (Collections, Disbursements, Remittances) has its own **Primary Key**. Subscribe to each product separately on [momodeveloper.mtn.com](https://momodeveloper.mtn.com). A Disbursements Primary Key will **not** work on Collections endpoints (`momo.collections.*`).
+
+### 1. Create an API User
+
+```ts
+import { Momo } from 'mtn-momo-sdk'
+
+const referenceId = uuid()
+
+await Momo.createApiUser(
+  'your_primary_key',
+  referenceId,
+  'https://your-domain.com/webhook', // Callback URL for notifications
+  'sandbox',                          // 'sandbox' | 'production'
+)
+
+console.log('API User created:', referenceId)
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `subscriptionKey` | `string` | Your product Primary Key |
+| `referenceId` | `string` | UUID v4 — becomes your API User ID |
+| `callbackHost` | `string` | URL where MTN sends transaction notifications |
+| `environment` | `'sandbox' \| 'production'` | Defaults to `'sandbox'` |
+
+### 2. Generate an API Key
+
+```ts
+const apiKey = await Momo.generateApiKey(
+  'your_primary_key',
+  referenceId, // Same UUID used for createApiUser
+  'sandbox',
+)
+
+console.log('API Key:', apiKey)
+// Store this key securely — it won't be shown again
+```
+
+### Full provisioning script
+
+```ts
+import { v4 as uuid } from 'uuid'
+import { Momo } from 'mtn-momo-sdk'
+
+async function setup() {
+  const ref = uuid()
+
+  // Step 1 — Create API User
+  await Momo.createApiUser('YOUR_SUBSCRIPTION_KEY', ref, 'https://your-site.com/webhook')
+  console.log('API User:', ref)
+
+  // Step 2 — Generate API Key
+  const apiKey = await Momo.generateApiKey('YOUR_SUBSCRIPTION_KEY', ref)
+  console.log('API Key:', apiKey)
+
+  // Step 3 — Use the SDK
+  const momo = new Momo({
+    subscriptionKey: 'YOUR_SUBSCRIPTION_KEY',
+    apiUser: ref,
+    apiKey,
+    environment: 'sandbox',
+  })
+
+  const balance = await momo.collections.getBalance()
+  console.log('Balance:', balance)
+}
+
+setup().catch(console.error)
+```
+
+> **Note**: In production, MTN provides the API User and API Key directly — skip steps 1 and 2.
 
 ---
 
 ## Configuration
 
-Créez un fichier `.env` à la racine de votre projet :
+Create a `.env` file at your project root:
 
 ```env
-MOMO_SUBSCRIPTION_KEY=votre_clé_abonnement
-MOMO_API_USER=votre_utilisateur_api
-MOMO_API_KEY=votre_clé_api
+MOMO_SUBSCRIPTION_KEY=your_primary_key
+MOMO_API_USER=your_api_user
+MOMO_API_KEY=your_api_key
 MOMO_ENVIRONMENT=sandbox
+MOMO_CALLBACK_HOST=https://your-site.com/webhook
 ```
 
-### Lecture du `.env` selon la plateforme
+### Reading `.env` by platform
 
 <details>
 <summary><b>React Native</b> — <code>react-native-dotenv</code></summary>
@@ -90,10 +295,10 @@ const { momoSubscriptionKey, momoApiUser, momoApiKey } = Constants.expoConfig?.e
 </details>
 
 <details>
-<summary><b>Vite / Web</b> — Variables d'environnement natives</summary>
+<summary><b>Vite / Web</b> — Native environment variables</summary>
 
 ```env
-# .env (doit commencer par VITE_)
+# .env (must start with VITE_)
 VITE_MOMO_SUBSCRIPTION_KEY=xxx
 VITE_MOMO_API_USER=xxx
 VITE_MOMO_API_KEY=xxx
@@ -110,7 +315,7 @@ const momo = new Momo({
 </details>
 
 <details>
-<summary><b>Next.js</b> — Variables d'environnement publiques</summary>
+<summary><b>Next.js</b> — Public environment variables</summary>
 
 ```env
 # .env.local
@@ -148,107 +353,123 @@ const momo = new Momo({
 ```
 </details>
 
-> **Note importante** : Ne commitez jamais votre fichier `.env`. Ajoutez-le à `.gitignore`.
+> **Important**: Never commit your `.env` file. Add it to `.gitignore`.
 
 ---
 
-## Utilisation
+## Usage
 
 ```ts
 import { Momo } from 'mtn-momo-sdk'
 
 const momo = new Momo({
-  subscriptionKey: 'votre_clé_abonnement',
-  apiUser: 'votre_utilisateur_api',
-  apiKey: 'votre_clé_api',
+  subscriptionKey: 'your_primary_key',
+  apiUser: 'your_api_user',
+  apiKey: 'your_api_key',
   environment: 'sandbox', // 'sandbox' | 'production'
 })
 ```
 
-Le constructeur initialise trois modules accessibles directement :
+The constructor initializes three modules and supports per-product Primary Keys:
 
-| Module | Accès | Description |
+```ts
+const momo = new Momo({
+  // Single key for all products
+  subscriptionKey: 'primary_key_collections',
+
+  // Or specific keys per product:
+  collectionSubscriptionKey: 'primary_key_collections',
+  disbursementSubscriptionKey: 'primary_key_disbursements',
+  remittanceSubscriptionKey: 'primary_key_remittances',
+
+  apiUser: 'your_api_user',
+  apiKey: 'your_api_key',
+  environment: 'sandbox',
+})
+```
+
+| Module | Access | Description |
 |---|---|---|
-| Collections | `momo.collections` | Paiements entrants (Request to Pay) |
-| Disbursements | `momo.disbursements` | Paiements sortants (Transfer) |
-| Remittances | `momo.remittances` | Transferts transfrontaliers |
+| Collections | `momo.collections` | Incoming payments (Request to Pay) |
+| Disbursements | `momo.disbursements` | Outgoing payments (Transfer) |
+| Remittances | `momo.remittances` | Cross-border transfers |
 
 ### Collections
 
-Recevoir des paiements depuis vos clients.
-
-```ts
-import { v4 as uuid } from 'uuid'
-
-const referenceId = uuid() // ID unique pour chaque transaction
-
-// 1. Demander un paiement
-await momo.collections.requestToPay(
-  {
-    amount: '5000',
-    currency: 'EUR',
-    externalId: 'facture-2024-001',
-    payer: {
-      partyIdType: 'MSISDN',
-      partyId: '256772123456',
-    },
-    payerMessage: 'Paiement facture janvier 2024',
-    payeeNote: 'Merci pour votre paiement',
-  },
-  referenceId,
-)
-
-// 2. Vérifier le statut
-const statut = await momo.collections.getTransactionStatus(referenceId)
-console.log(statut.status) // 'SUCCESSFUL' | 'FAILED' | 'PENDING'
-
-// 3. Consulter le solde
-const solde = await momo.collections.getBalance()
-console.log(`${solde.availableBalance} ${solde.currency}`)
-
-// 4. Vérifier si un compte est actif
-const actif = await momo.collections.isAccountHolderActive('MSISDN', '256772123456')
-console.log(actif.result) // true | false
-```
-
-### Disbursements
-
-Envoyer de l'argent à vos utilisateurs.
+Receive payments from your customers.
 
 ```ts
 import { v4 as uuid } from 'uuid'
 
 const referenceId = uuid()
 
-// 1. Effectuer un transfert
-await momo.disbursements.transfer(
+// 1. Request a payment
+await momo.collections.requestToPay(
   {
-    amount: '2500',
+    amount: '5000',
     currency: 'EUR',
-    externalId: 'remb-2024-001',
-    payee: {
+    externalId: 'invoice-2024-001',
+    payer: {
       partyIdType: 'MSISDN',
       partyId: '256772123456',
     },
-    payerMessage: 'Remboursement commande #1234',
-    payeeNote: 'Votre remboursement a été effectué',
+    payerMessage: 'Payment for January 2024 invoice',
+    payeeNote: 'Thank you for your payment',
   },
   referenceId,
 )
 
-// 2. Vérifier le statut
-const statut = await momo.disbursements.getTransactionStatus(referenceId)
+// 2. Check transaction status
+const status = await momo.collections.getTransactionStatus(referenceId)
+console.log(status.status) // 'SUCCESSFUL' | 'FAILED' | 'PENDING'
 
-// 3. Consulter le solde
-const solde = await momo.disbursements.getBalance()
+// 3. Check balance
+const balance = await momo.collections.getBalance()
+console.log(`${balance.availableBalance} ${balance.currency}`)
 
-// 4. Valider un compte bénéficiaire
-const actif = await momo.disbursements.isAccountHolderActive('MSISDN', '256772123456')
+// 4. Check if an account is active
+const active = await momo.collections.isAccountHolderActive('MSISDN', '256772123456')
+console.log(active.result) // true | false
+```
+
+### Disbursements
+
+Send money to your users.
+
+```ts
+import { v4 as uuid } from 'uuid'
+
+const referenceId = uuid()
+
+// 1. Make a transfer
+await momo.disbursements.transfer(
+  {
+    amount: '2500',
+    currency: 'EUR',
+    externalId: 'refund-2024-001',
+    payee: {
+      partyIdType: 'MSISDN',
+      partyId: '256772123456',
+    },
+    payerMessage: 'Refund for order #1234',
+    payeeNote: 'Your refund has been processed',
+  },
+  referenceId,
+)
+
+// 2. Check transaction status
+const status = await momo.disbursements.getTransactionStatus(referenceId)
+
+// 3. Check balance
+const balance = await momo.disbursements.getBalance()
+
+// 4. Validate a recipient account
+const active = await momo.disbursements.isAccountHolderActive('MSISDN', '256772123456')
 ```
 
 ### Remittances
 
-Transferts d'argent internationaux.
+International money transfers.
 
 ```ts
 const referenceId = uuid()
@@ -257,7 +478,7 @@ await momo.remittances.transfer(
   {
     amount: '100000',
     currency: 'EUR',
-    externalId: 'transfert-2024-001',
+    externalId: 'transfer-2024-001',
     payee: {
       partyIdType: 'MSISDN',
       partyId: '256772123456',
@@ -266,117 +487,207 @@ await momo.remittances.transfer(
   referenceId,
 )
 
-const statut = await momo.remittances.getTransactionStatus(referenceId)
-const solde = await momo.remittances.getBalance()
+const status = await momo.remittances.getTransactionStatus(referenceId)
+const balance = await momo.remittances.getBalance()
 ```
 
 ---
 
-## Référence de l'API
+## Webhooks
 
-### `Momo`
+MTN MoMo sends asynchronous notifications about transaction status changes to your `callbackHost`. Use `Momo.parseWebhookPayload()` to validate and parse incoming requests.
+
+```ts
+import { Momo } from 'mtn-momo-sdk'
+
+// Example: Express.js webhook endpoint
+app.post('/webhook', (req, res) => {
+  const payload = Momo.parseWebhookPayload(req.body)
+
+  if (!payload) {
+    return res.status(400).send('Invalid payload')
+  }
+
+  console.log('Transaction:', payload.referenceId, payload.status)
+
+  switch (payload.status) {
+    case 'SUCCESSFUL':
+      // Update your database, deliver goods, etc.
+      break
+    case 'FAILED':
+      // Notify the user, retry logic, etc.
+      break
+    case 'PENDING':
+      // Wait for final status
+      break
+  }
+
+  res.status(200).send('OK')
+})
+```
+
+### Webhook payload structure
+
+```ts
+interface MomoWebhookPayload {
+  referenceId: string      // Transaction reference UUID
+  status: 'SUCCESSFUL' | 'FAILED' | 'PENDING'
+  amount?: string
+  currency?: string
+  financialTransactionId?: string  // MTN transaction ID
+  externalId?: string              // Your business ID
+  payer?: Party
+  reason?: Record<string, unknown>
+  payeeNote?: string
+  payerMessage?: string
+}
+```
+
+---
+
+## API Reference
+
+### `Momo` constructor
 
 ```ts
 constructor(config: MomoConfig)
 ```
 
-| Propriété | Type | Défaut | Description |
+| Property | Type | Default | Description |
 |---|---|---|---|
-| `subscriptionKey` | `string` | — | Clé d'abonnement obtenue depuis le portail développeur |
-| `apiUser` | `string` | — | Identifiant API user (UUID v4) |
-| `apiKey` | `string` | — | Clé API générée |
-| `environment` | `'sandbox' \| 'production'` | `'sandbox'` | Environnement cible |
-| `callbackHost` | `string` | — | URL de callback pour les notifications (optionnel) |
+| `subscriptionKey` | `string` | — | Default Primary Key (used for all products if no specific key is set) |
+| `collectionSubscriptionKey` | `string` | — | Primary Key for Collections only (overrides `subscriptionKey`) |
+| `disbursementSubscriptionKey` | `string` | — | Primary Key for Disbursements only (overrides `subscriptionKey`) |
+| `remittanceSubscriptionKey` | `string` | — | Primary Key for Remittances only (overrides `subscriptionKey`) |
+| `apiUser` | `string` | — | API user ID (UUID v4) |
+| `apiKey` | `string` | — | Generated API key |
+| `environment` | `'sandbox' \| 'production'` | `'sandbox'` | Target environment |
+| `callbackHost` | `string` | — | Callback URL for notifications (optional) |
+
+### `Momo.createApiUser()`
+
+```ts
+static createApiUser(subscriptionKey, referenceId, callbackHost, environment): Promise<void>
+```
+
+Creates an API User in the sandbox environment. See [Provisioning](#provisioning).
+
+### `Momo.generateApiKey()`
+
+```ts
+static generateApiKey(subscriptionKey, referenceId, environment): Promise<string>
+```
+
+Generates an API Key for an existing API User. See [Provisioning](#provisioning).
+
+### `Momo.parseWebhookPayload()`
+
+```ts
+static parseWebhookPayload(body: unknown): MomoWebhookPayload | null
+```
+
+Validates and parses an incoming MTN webhook payload. Returns `null` for invalid payloads. See [Webhooks](#webhooks).
 
 ### `collections.requestToPay(params, referenceId)`
 
-| Paramètre | Type | Description |
+| Parameter | Type | Description |
 |---|---|---|
-| `params.amount` | `string` | Montant (ex: `"5000"`) |
-| `params.currency` | `string` | Devise (ex: `"EUR"`, `"XAF"`) |
-| `params.externalId` | `string` | Identifiant métier de la transaction |
-| `params.payer.partyIdType` | `'MSISDN' \| 'EMAIL' \| 'PARTY_CODE'` | Type d'identifiant du payeur |
-| `params.payer.partyId` | `string` | Valeur de l'identifiant (numéro tel, email, etc.) |
-| `params.payerMessage` | `string` | Message visible par le payeur (optionnel) |
-| `params.payeeNote` | `string` | Note interne pour le bénéficiaire (optionnel) |
-| `referenceId` | `string` | UUID v4 unique pour cette transaction |
+| `params.amount` | `string` | Amount (e.g. `"5000"`) |
+| `params.currency` | `string` | Currency (e.g. `"EUR"`, `"XAF"`) |
+| `params.externalId` | `string` | Business transaction ID |
+| `params.payer.partyIdType` | `'MSISDN' \| 'EMAIL' \| 'PARTY_CODE'` | Payer identifier type |
+| `params.payer.partyId` | `string` | Identifier value (phone number, email, etc.) |
+| `params.payerMessage` | `string` | Message visible to the payer (optional) |
+| `params.payeeNote` | `string` | Internal note for the payee (optional) |
+| `params.callbackUrl` | `string` | URL for per-transaction callback (optional, overrides `callbackHost`) |
+| `referenceId` | `string` | Unique UUID v4 for this transaction |
 
-**Retour :** `Promise<void>` (statut 202 = acceptée)
+**Returns:** `Promise<void>` (status 202 = accepted)
 
 ### `transfer(params, referenceId)`
 
-Mêmes paramètres que `requestToPay` (sauf `payer` → `payee`).
+Same parameters as `requestToPay` (except `payer` → `payee`).
 
 ---
 
-## Tests Sandbox
+## Sandbox Testing
 
-### Obtenir des credentials sandbox
-
-1. Créez un compte sur [momodeveloper.mtn.com](https://momodeveloper.mtn.com)
-2. Abonnez-vous aux produits souhaités (Collections, Disbursements, Remittances)
-3. Récupérez votre **Primary Key** (devient `subscriptionKey`)
-4. Créez un **API User** et générez un **API Key** via l'API ou le portail
-
-### Numéros de test
-
-| Numéro | Comportement |
-|---|---|
-| `256772123456` | Paiement accepté |
-| `256772654321` | Paiement refusé |
-| `256772999999` | Transaction en attente (timeout) |
-
-### Initialisation rapide
+### Provision credentials with the SDK
 
 ```ts
+import { v4 as uuid } from 'uuid'
 import { Momo } from 'mtn-momo-sdk'
 
-const momo = new Momo({
-  subscriptionKey: 'clé_primaire_du_produit',
-  apiUser: 'uuid_api_user',
-  apiKey: 'clé_api_générée',
-  environment: 'sandbox',
-})
+async function sandboxSetup() {
+  const ref = uuid()
 
-// Test : consulter le solde
-momo.collections.getBalance()
-  .then(b => console.log('Solde:', b.availableBalance, b.currency))
-  .catch(e => console.error('Erreur:', e.message))
+  // 1. Create API User (this is your apiUser)
+  await Momo.createApiUser(
+    'YOUR_SUBSCRIPTION_KEY',
+    ref,
+    'https://your-site.com/webhook',
+  )
+
+  // 2. Generate API Key
+  const apiKey = await Momo.generateApiKey('YOUR_SUBSCRIPTION_KEY', ref)
+
+  // 3. Initialize the SDK
+  const momo = new Momo({
+    subscriptionKey: 'YOUR_SUBSCRIPTION_KEY',
+    apiUser: ref,
+    apiKey,
+    environment: 'sandbox',
+  })
+
+  // 4. Test
+  const balance = await momo.collections.getBalance()
+  console.log('Sandbox balance:', balance)
+}
 ```
+
+### Test numbers
+
+| Number | Behavior |
+|---|---|
+| `256772123456` | Payment accepted |
+| `256772654321` | Payment rejected |
+| `256772999999` | Transaction pending (timeout) |
 
 ---
 
-## Passage en Production
+## Going to Production
 
-### Prérequis
+### Prerequisites
 
-1. Compléter le processus KYC auprès de MTN
-2. Signer le contrat de service
-3. Obtenir les credentials **production** depuis le portail
+1. Complete the KYC process with MTN
+2. Sign the service agreement
+3. Get **production** credentials (API User, API Key) from the portal
 
-### Changer l'environnement
+### Switch environment
 
 ```ts
 const momo = new Momo({
-  ...credentials,
+  subscriptionKey: 'prod_subscription_key',
+  apiUser: 'prod_api_user',
+  apiKey: 'prod_api_key',
   environment: 'production',
 })
 ```
 
-### Différences sandbox vs production
+### Sandbox vs Production
 
 | Aspect | Sandbox | Production |
 |---|---|---|
 | URL | `sandbox.momodeveloper.mtn.com` | `momoapi.mtn.com` |
-| API User | Auto-créé via API | Fourni par MTN |
-| API Key | Auto-généré | Fourni par MTN |
-| Transactions | Simulées | Réelles |
-| Callbacks | Webhook simulé | Webhook réel |
-| Limites | Illimitées | Selon contrat |
+| API User | Self-created via `createApiUser()` | Provided by MTN |
+| API Key | Self-generated via `generateApiKey()` | Provided by MTN |
+| Transactions | Simulated | Real |
+| Callbacks | Simulated webhook | Real webhook |
+| Limits | Unlimited | Per contract |
 
 ---
 
-## Gestion des Erreurs
+## Error Handling
 
 ```ts
 import { Momo } from 'mtn-momo-sdk'
@@ -388,53 +699,53 @@ try {
 } catch (error) {
   if (error instanceof Error) {
     console.error('Code:', error.message.split(':')[0])
-    console.error('Détail:', error.message)
+    console.error('Detail:', error.message)
   }
 }
 ```
 
-### Codes d'erreur courants
+### Common HTTP error codes
 
-| Code HTTP | Cause |
+| Code | Cause |
 |---|---|
-| `400` | Requête invalide (paramètres manquants ou incorrects) |
-| `401` | Authentification échouée (token invalide ou expiré) |
-| `403` | Accès refusé (vérifiez votre subscription key) |
-| `404` | Transaction introuvable |
-| `409` | Conflit (ID de référence déjà utilisé) |
-| `429` | Trop de requêtes (rate limit) |
-| `500` | Erreur interne MTN |
+| `400` | Invalid request (missing or incorrect parameters) |
+| `401` | Authentication failed (invalid or expired token) |
+| `403` | Access denied (check your subscription key) |
+| `404` | Transaction not found |
+| `409` | Conflict (reference ID already used) |
+| `429` | Too many requests (rate limit) |
+| `500` | MTN internal error |
 
-### Gestion du token
+### Token management
 
-Le SDK gère automatiquement l'obtention et le renouvellement du token OAuth2. Il est récupéré de manière **lazy** (au premier appel API) et conservé pour les appels suivants. Aucune action manuelle requise.
+The SDK automatically handles OAuth2 token acquisition and renewal. The token is fetched **lazily** (on the first API call) and cached for subsequent requests. No manual action required.
 
 ---
 
 ## FAQ
 
-### Ce SDK fonctionne-t-il en React Native ?
+### Does this SDK work with React Native?
 
-Oui. Il utilise uniquement `fetch` (disponible depuis RN 0.71+) et ne dépend d'aucun module natif Node.js (`fs`, `crypto`, `path`, `stream`).
+Yes. It only uses `fetch` (available since RN 0.71+) and `base-64` (cross-platform Base64). No dependency on Node.js native modules (`fs`, `crypto`, `path`, `stream`).
 
-### Puis-je l'utiliser côté navigateur ?
+### Can I use it in a browser?
 
-Oui. Le SDK fonctionne dans tous les navigateurs modernes supportant `fetch`.
+Yes. The SDK works in all modern browsers that support `fetch`.
 
-### Comment gérer les callbacks/notifications ?
+### How do I handle callbacks/notifications?
 
-Configurez `callbackHost` dans la config. MTN appellera cette URL pour notifier le statut final de la transaction. Implémentez une route webhook sur votre serveur pour recevoir ces notifications.
+Set `callbackHost` when creating the API User. MTN will call this URL to notify the final transaction status. Use `Momo.parseWebhookPayload()` to validate incoming requests on your webhook endpoint.
 
-### Les numéros de test sandbox sont-ils les mêmes pour tous les pays ?
+### Are sandbox test numbers the same for all countries?
 
-Non. Les numéros de test peuvent varier selon le pays. Consultez la documentation officielle de MTN pour le pays cible.
+No. Test numbers may vary by country. Check the official MTN documentation for your target country.
 
-### Le taux de change est-il inclus ?
+### Is the exchange rate included?
 
-Non. Le SDK traite les montants dans la devise spécifiée. La conversion de devise est gérée par MTN selon leur taux en vigueur.
+No. The SDK processes amounts in the specified currency. Currency conversion is handled by MTN at their current rate.
 
 ---
 
-## Licence
+## License
 
 ISC

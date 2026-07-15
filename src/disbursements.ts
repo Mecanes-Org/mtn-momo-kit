@@ -1,5 +1,5 @@
 import { HttpClient } from './client'
-import type { TransferParams, TransactionStatus, Balance, AccountHolderStatus } from './types'
+import type { TransferParams, TransactionStatus, Balance, AccountHolderStatus, BasicUserInfo } from './types'
 
 export class Disbursements {
   private client: HttpClient
@@ -9,10 +9,13 @@ export class Disbursements {
   }
 
   async transfer(params: TransferParams, referenceId: string): Promise<void> {
-    await this.client.post('/disbursement/v1_0/transfer', params, {
+    const headers: Record<string, string> = {
       'X-Reference-Id': referenceId,
-      'X-Target-Environment': 'sandbox',
-    })
+    }
+    if (params.callbackUrl) {
+      headers['X-Callback-Url'] = params.callbackUrl
+    }
+    await this.client.post('/disbursement/v1_0/transfer', params, headers)
   }
 
   async getTransactionStatus(referenceId: string): Promise<TransactionStatus> {
@@ -29,5 +32,15 @@ export class Disbursements {
     return this.client.get<AccountHolderStatus>(
       `/disbursement/v1_0/accountholder/${partyIdType}/${partyId}/active`,
     )
+  }
+
+  async getBasicUserInfo(partyIdType: string, partyId: string): Promise<BasicUserInfo> {
+    return this.client.get<BasicUserInfo>(
+      `/disbursement/v1_0/accountholder/${partyIdType}/${partyId}/basicuserinfo`,
+    )
+  }
+
+  async getBalanceInCurrency(currency: string): Promise<Balance> {
+    return this.client.get<Balance>(`/disbursement/v1_0/account/balance/${currency}`)
   }
 }
