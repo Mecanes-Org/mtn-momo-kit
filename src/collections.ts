@@ -2,39 +2,39 @@ import { HttpClient } from './client'
 import type { RequestToPayParams, TransactionStatus, Balance, AccountHolderStatus, BasicUserInfo } from './types'
 
 /**
- * Module Collections — réception de paiements (Request to Pay).
- * Utilisé pour encaisser des paiements clients sur votre site e-commerce.
+ * Collections module — incoming payments (Request to Pay).
+ * Use to collect payments from customers on your e-commerce site.
  */
 export class Collections {
   private client: HttpClient
 
   /**
-   * @param client - Instance HttpClient configurée pour Collections
+   * @param client - HttpClient instance configured for Collections
    */
   constructor(client: HttpClient) {
     this.client = client
   }
 
   /**
-   * Demande un paiement à un client MTN MoMo.
-   * La transaction est asynchrone — MTN renvoie le statut final via webhook.
+   * Request a payment from an MTN MoMo customer.
+   * The transaction is asynchronous — MTN sends the final status via webhook.
    *
-   * @param params - Paramètres de la demande de paiement
-   * @param params.amount - Montant (ex: "5000")
-   * @param params.currency - Devise (ex: "EUR", "XAF")
-   * @param params.externalId - Identifiant métier de la transaction
-   * @param params.payer - Informations du payeur (partyIdType + partyId)
-   * @param params.payerMessage - Message visible par le payeur (optionnel)
-   * @param params.payeeNote - Note interne pour le bénéficiaire (optionnel)
-   * @param params.callbackUrl - URL de callback par transaction (optionnel)
-   * @param referenceId - UUID v4 unique pour cette transaction
+   * @param params - Payment request parameters
+   * @param params.amount - Amount (e.g. "5000")
+   * @param params.currency - Currency code (e.g. "EUR", "XAF")
+   * @param params.externalId - Your business transaction ID
+   * @param params.payer - Payer information (partyIdType + partyId)
+   * @param params.payerMessage - Message visible to the payer (optional)
+   * @param params.payeeNote - Internal note for the payee (optional)
+   * @param params.callbackUrl - Per-transaction callback URL (optional, overrides callbackHost)
+   * @param referenceId - Unique UUID v4 for this transaction
    *
    * @example
    * const refId = uuid()
    * await momo.collections.requestToPay({
    *   amount: '5000',
    *   currency: 'EUR',
-   *   externalId: 'commande-123',
+   *   externalId: 'order-123',
    *   payer: { partyIdType: 'MSISDN', partyId: '256772123456' },
    * }, refId)
    */
@@ -49,10 +49,10 @@ export class Collections {
   }
 
   /**
-   * Récupère le statut d'une transaction Request to Pay.
+   * Get the status of a Request to Pay transaction.
    *
-   * @param referenceId - UUID de la transaction (celui passé à requestToPay)
-   * @returns Statut complet de la transaction
+   * @param referenceId - Transaction UUID (the one passed to requestToPay)
+   * @returns Full transaction status
    *
    * @example
    * const status = await momo.collections.getTransactionStatus(refId)
@@ -65,9 +65,9 @@ export class Collections {
   }
 
   /**
-   * Consulte le solde du portefeuille Collections.
+   * Get the Collections wallet balance.
    *
-   * @returns Solde disponible et devise
+   * @returns Available balance and currency
    *
    * @example
    * const balance = await momo.collections.getBalance()
@@ -78,15 +78,15 @@ export class Collections {
   }
 
   /**
-   * Vérifie si un compte MoMo est actif et peut recevoir des paiements.
+   * Check if an MoMo account is active and can receive payments.
    *
-   * @param partyIdType - Type d'identifiant (MSISDN | EMAIL | PARTY_CODE)
-   * @param partyId - Valeur de l'identifiant (numéro de téléphone, email, etc.)
-   * @returns Résultat du test (true/false) et raison éventuelle
+   * @param partyIdType - Identifier type (MSISDN | EMAIL | PARTY_CODE)
+   * @param partyId - Identifier value (phone number, email, etc.)
+   * @returns Active status and optional reason
    *
    * @example
-   * const actif = await momo.collections.isAccountHolderActive('MSISDN', '256772123456')
-   * console.log(actif.result) // true | false
+   * const active = await momo.collections.isAccountHolderActive('MSISDN', '256772123456')
+   * console.log(active.result) // true | false
    */
   async isAccountHolderActive(partyIdType: string, partyId: string): Promise<AccountHolderStatus> {
     return this.client.get<AccountHolderStatus>(
@@ -95,11 +95,11 @@ export class Collections {
   }
 
   /**
-   * Récupère les informations de base d'un utilisateur MoMo (nom, email, etc.).
+   * Get basic user info from an MoMo account (name, email, etc.).
    *
-   * @param partyIdType - Type d'identifiant (MSISDN | EMAIL | PARTY_CODE)
-   * @param partyId - Valeur de l'identifiant
-   * @returns Informations personnelles de l'utilisateur (si disponibles)
+   * @param partyIdType - Identifier type (MSISDN | EMAIL | PARTY_CODE)
+   * @param partyId - Identifier value
+   * @returns Basic personal information (if available)
    *
    * @example
    * const info = await momo.collections.getBasicUserInfo('MSISDN', '256772123456')
@@ -112,10 +112,10 @@ export class Collections {
   }
 
   /**
-   * Consulte le solde du portefeuille Collections dans une devise spécifique.
+   * Get the Collections wallet balance in a specific currency.
    *
-   * @param currency - Code devise (ex: "EUR", "USD", "XAF")
-   * @returns Solde disponible dans la devise demandée
+   * @param currency - Currency code (e.g. "EUR", "USD", "XAF")
+   * @returns Balance in the requested currency
    *
    * @example
    * const balance = await momo.collections.getBalanceInCurrency('EUR')

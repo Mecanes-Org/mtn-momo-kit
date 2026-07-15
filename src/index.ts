@@ -10,8 +10,8 @@ const BASE_URLS: Record<string, string> = {
 }
 
 /**
- * Point d'entrée principal du SDK MTN MoMo.
- * Initialise les trois produits : Collections, Disbursements, Remittances.
+ * Main entry point for the MTN MoMo SDK.
+ * Initializes all three products: Collections, Disbursements, Remittances.
  *
  * @example
  * const momo = new Momo({
@@ -30,15 +30,15 @@ export class Momo {
   readonly remittances: Remittances
 
   /**
-   * @param config - Configuration complète du SDK
-   * @param config.subscriptionKey - Primary Key par défaut (tous produits)
-   * @param config.collectionSubscriptionKey - Primary Key Collections seulement
-   * @param config.disbursementSubscriptionKey - Primary Key Disbursements seulement
-   * @param config.remittanceSubscriptionKey - Primary Key Remittances seulement
-   * @param config.apiUser - UUID v4 de l'API User
-   * @param config.apiKey - API Key générée
-   * @param config.environment - 'sandbox' (défaut) | 'production'
-   * @param config.callbackHost - URL de callback pour les webhooks (optionnel)
+   * @param config - SDK configuration
+   * @param config.subscriptionKey - Default Primary Key (used for all products if no specific key is set)
+   * @param config.collectionSubscriptionKey - Primary Key for Collections only (overrides subscriptionKey)
+   * @param config.disbursementSubscriptionKey - Primary Key for Disbursements only (overrides subscriptionKey)
+   * @param config.remittanceSubscriptionKey - Primary Key for Remittances only (overrides subscriptionKey)
+   * @param config.apiUser - API User UUID (v4)
+   * @param config.apiKey - API Key generated via generateApiKey()
+   * @param config.environment - 'sandbox' (default) | 'production'
+   * @param config.callbackHost - Callback URL for MTN webhook notifications (optional)
    */
   constructor(config: MomoConfig) {
     const env = config.environment ?? 'sandbox'
@@ -55,17 +55,17 @@ export class Momo {
   }
 
   /**
-   * Crée un API User sur le portail MTN.
-   * Étape préliminaire obligatoire (sandbox) avant d'utiliser le SDK.
+   * Create an API User on the MTN portal.
+   * Required provisioning step (sandbox) before using the SDK.
    *
-   * @param subscriptionKey - Primary Key du produit
-   * @param referenceId - UUID v4 qui deviendra votre apiUser
-   * @param callbackHost - URL où MTN enverra les notifications
-   * @param environment - 'sandbox' (défaut) | 'production'
+   * @param subscriptionKey - Product Primary Key
+   * @param referenceId - UUID v4 — becomes your apiUser
+   * @param callbackHost - URL where MTN sends transaction notifications
+   * @param environment - 'sandbox' (default) | 'production'
    *
    * @example
    * const ref = uuid()
-   * await Momo.createApiUser('primary_key', ref, 'https://mon-site.com/webhook')
+   * await Momo.createApiUser('primary_key', ref, 'https://my-site.com/webhook')
    * console.log('API User:', ref)
    */
   static async createApiUser(
@@ -90,13 +90,13 @@ export class Momo {
   }
 
   /**
-   * Génère une API Key pour un API User existant.
-   * À appeler après createApiUser().
+   * Generate an API Key for an existing API User.
+   * Call after createApiUser().
    *
-   * @param subscriptionKey - Primary Key du produit
-   * @param referenceId - UUID de l'API User (le même que createApiUser)
-   * @param environment - 'sandbox' (défaut) | 'production'
-   * @returns L'API Key à conserver précieusement
+   * @param subscriptionKey - Product Primary Key
+   * @param referenceId - API User UUID (same as createApiUser)
+   * @param environment - 'sandbox' (default) | 'production'
+   * @returns The API Key — store it securely, it will not be shown again
    *
    * @example
    * const apiKey = await Momo.generateApiKey('primary_key', ref)
@@ -122,17 +122,16 @@ export class Momo {
   }
 
   /**
-   * Valide et parse un payload webhook envoyé par MTN.
-   * Utilisez cette méthode dans votre endpoint /webhook pour vérifier
-   * l'intégrité des notifications de transaction.
+   * Validate and parse an incoming MTN webhook payload.
+   * Use this in your /webhook endpoint to verify transaction notifications.
    *
-   * @param body - Corps brut de la requête webhook (req.body)
-   * @returns MomoWebhookPayload valide ou null si invalide
+   * @param body - Raw webhook request body (req.body)
+   * @returns Validated MomoWebhookPayload, or null if invalid
    *
    * @example
    * app.post('/webhook', (req, res) => {
    *   const payload = Momo.parseWebhookPayload(req.body)
-   *   if (!payload) return res.status(400).send('Invalide')
+   *   if (!payload) return res.status(400).send('Invalid payload')
    *   console.log(payload.status) // SUCCESSFUL | FAILED | PENDING
    *   res.status(200).send('OK')
    * })

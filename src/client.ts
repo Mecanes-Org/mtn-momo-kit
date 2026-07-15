@@ -6,6 +6,10 @@ const BASE_URLS: Record<string, string> = {
   production: 'https://momoapi.mtn.com',
 }
 
+/**
+ * Low-level HTTP client that handles authentication and API calls to MTN MoMo.
+ * Manages OAuth2 token acquisition, caching, expiry, and auto-refresh on 401.
+ */
 export class HttpClient {
   private baseUrl: string
   private subscriptionKey: string
@@ -18,11 +22,11 @@ export class HttpClient {
   private tokenPath: string
 
   /**
-   * @param apiUser - UUID v4 de l'API User
-   * @param apiKey - API Key générée
-   * @param subscriptionKey - Primary Key du produit
-   * @param environment - sandbox | production
-   * @param tokenPath - Chemin du endpoint OAuth2 (ex: /collection/token/)
+   * @param apiUser - API User UUID (v4)
+   * @param apiKey - API Key generated via generateApiKey()
+   * @param subscriptionKey - Product Primary Key
+   * @param environment - Target environment (sandbox | production)
+   * @param tokenPath - OAuth2 token endpoint path (e.g. /collection/token/)
    */
   constructor(apiUser: string, apiKey: string, subscriptionKey: string, environment: string, tokenPath: string) {
     this.apiUser = apiUser
@@ -80,6 +84,15 @@ export class HttpClient {
     return res
   }
 
+  /**
+   * Sends a POST request to the MTN MoMo API.
+   * Automatically handles authentication and 401 retry.
+   *
+   * @param path - API endpoint path (relative to base URL)
+   * @param body - Request body (will be JSON-stringified)
+   * @param extraHeaders - Additional headers to include
+   * @returns Parsed JSON response, or void for 202 (accepted)
+   */
   async post<T>(path: string, body?: unknown, extraHeaders?: Record<string, string>): Promise<T> {
     const h = await this.headers(extraHeaders)
     const res = await this.fetchWithRetry(path, {
@@ -95,6 +108,13 @@ export class HttpClient {
     return res.json()
   }
 
+  /**
+   * Sends a GET request to the MTN MoMo API.
+   * Automatically handles authentication and 401 retry.
+   *
+   * @param path - API endpoint path (relative to base URL)
+   * @returns Parsed JSON response
+   */
   async get<T>(path: string): Promise<T> {
     const h = await this.headers()
     const res = await this.fetchWithRetry(path, {

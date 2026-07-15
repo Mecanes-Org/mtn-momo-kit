@@ -2,38 +2,38 @@ import { HttpClient } from './client'
 import type { TransferParams, TransactionStatus, Balance, BasicUserInfo } from './types'
 
 /**
- * Module Remittances — transferts d'argent internationaux.
- * Utilisé pour envoyer de l'argent entre différents pays (cross-border).
+ * Remittances module — cross-border money transfers.
+ * Use to send money between different countries.
  */
 export class Remittances {
   private client: HttpClient
 
   /**
-   * @param client - Instance HttpClient configurée pour Remittances
+   * @param client - HttpClient instance configured for Remittances
    */
   constructor(client: HttpClient) {
     this.client = client
   }
 
   /**
-   * Effectue un transfert d'argent international.
+   * Send an international money transfer.
    *
-   * @param params - Paramètres du transfert
-   * @param params.amount - Montant (ex: "100000")
-   * @param params.currency - Devise (ex: "EUR", "USD")
-   * @param params.externalId - Identifiant métier de la transaction
-   * @param params.payee - Informations du bénéficiaire (partyIdType + partyId)
-   * @param params.payerMessage - Message visible par le payeur (optionnel)
-   * @param params.payeeNote - Note pour le bénéficiaire (optionnel)
-   * @param params.callbackUrl - URL de callback par transaction (optionnel)
-   * @param referenceId - UUID v4 unique pour cette transaction
+   * @param params - Transfer parameters
+   * @param params.amount - Amount (e.g. "100000")
+   * @param params.currency - Currency code (e.g. "EUR", "USD")
+   * @param params.externalId - Your business transaction ID
+   * @param params.payee - Payee information (partyIdType + partyId)
+   * @param params.payerMessage - Message visible to the payer (optional)
+   * @param params.payeeNote - Note for the payee (optional)
+   * @param params.callbackUrl - Per-transaction callback URL (optional, overrides callbackHost)
+   * @param referenceId - Unique UUID v4 for this transaction
    *
    * @example
    * const refId = uuid()
    * await momo.remittances.transfer({
    *   amount: '100000',
    *   currency: 'EUR',
-   *   externalId: 'transfert-001',
+   *   externalId: 'transfer-001',
    *   payee: { partyIdType: 'MSISDN', partyId: '256772123456' },
    * }, refId)
    */
@@ -48,10 +48,10 @@ export class Remittances {
   }
 
   /**
-   * Récupère le statut d'un transfert international.
+   * Get the status of an international transfer.
    *
-   * @param referenceId - UUID de la transaction (celui passé à transfer)
-   * @returns Statut complet de la transaction
+   * @param referenceId - Transaction UUID (the one passed to transfer)
+   * @returns Full transaction status
    *
    * @example
    * const status = await momo.remittances.getTransactionStatus(refId)
@@ -64,9 +64,9 @@ export class Remittances {
   }
 
   /**
-   * Consulte le solde du portefeuille Remittances.
+   * Get the Remittances wallet balance.
    *
-   * @returns Solde disponible et devise
+   * @returns Available balance and currency
    *
    * @example
    * const balance = await momo.remittances.getBalance()
@@ -77,11 +77,11 @@ export class Remittances {
   }
 
   /**
-   * Récupère les informations de base d'un utilisateur MoMo.
+   * Get basic user info from an MoMo account.
    *
-   * @param partyIdType - Type d'identifiant (MSISDN | EMAIL | PARTY_CODE)
-   * @param partyId - Valeur de l'identifiant
-   * @returns Informations personnelles de l'utilisateur
+   * @param partyIdType - Identifier type (MSISDN | EMAIL | PARTY_CODE)
+   * @param partyId - Identifier value
+   * @returns Basic personal information
    *
    * @example
    * const info = await momo.remittances.getBasicUserInfo('MSISDN', '256772123456')
@@ -94,10 +94,10 @@ export class Remittances {
   }
 
   /**
-   * Consulte le solde Remittances dans une devise spécifique.
+   * Get the Remittances wallet balance in a specific currency.
    *
-   * @param currency - Code devise (ex: "EUR", "USD", "XAF")
-   * @returns Solde disponible dans la devise demandée
+   * @param currency - Currency code (e.g. "EUR", "USD", "XAF")
+   * @returns Balance in the requested currency
    *
    * @example
    * const balance = await momo.remittances.getBalanceInCurrency('EUR')

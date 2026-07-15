@@ -2,41 +2,41 @@ import { HttpClient } from './client'
 import type { TransferParams, TransactionStatus, Balance, AccountHolderStatus, BasicUserInfo } from './types'
 
 /**
- * Module Disbursements — envoi d'argent (Transfer).
- * Utilisé pour les remboursements, reversements aux vendeurs, paiements de gains, etc.
+ * Disbursements module — outgoing payments (Transfer).
+ * Use for refunds, seller payouts, prize money, etc.
  */
 export class Disbursements {
   private client: HttpClient
 
   /**
-   * @param client - Instance HttpClient configurée pour Disbursements
+   * @param client - HttpClient instance configured for Disbursements
    */
   constructor(client: HttpClient) {
     this.client = client
   }
 
   /**
-   * Envoie de l'argent à un utilisateur MTN MoMo.
-   * Utilisé pour les remboursements, reversements aux vendeurs, etc.
+   * Send money to an MTN MoMo user.
+   * Use for refunds, payouts to sellers, etc.
    *
-   * @param params - Paramètres du transfert
-   * @param params.amount - Montant (ex: "2500")
-   * @param params.currency - Devise (ex: "EUR", "XAF")
-   * @param params.externalId - Identifiant métier de la transaction
-   * @param params.payee - Informations du bénéficiaire (partyIdType + partyId)
-   * @param params.payerMessage - Message visible par le payeur (optionnel)
-   * @param params.payeeNote - Note pour le bénéficiaire (optionnel)
-   * @param params.callbackUrl - URL de callback par transaction (optionnel)
-   * @param referenceId - UUID v4 unique pour cette transaction
+   * @param params - Transfer parameters
+   * @param params.amount - Amount (e.g. "2500")
+   * @param params.currency - Currency code (e.g. "EUR", "XAF")
+   * @param params.externalId - Your business transaction ID
+   * @param params.payee - Payee information (partyIdType + partyId)
+   * @param params.payerMessage - Message visible to the payer (optional)
+   * @param params.payeeNote - Note for the payee (optional)
+   * @param params.callbackUrl - Per-transaction callback URL (optional, overrides callbackHost)
+   * @param referenceId - Unique UUID v4 for this transaction
    *
    * @example
    * const refId = uuid()
    * await momo.disbursements.transfer({
    *   amount: '2500',
    *   currency: 'EUR',
-   *   externalId: 'remb-123',
+   *   externalId: 'refund-123',
    *   payee: { partyIdType: 'MSISDN', partyId: '256772123456' },
-   *   payeeNote: 'Remboursement commande #123',
+   *   payeeNote: 'Refund for order #123',
    * }, refId)
    */
   async transfer(params: TransferParams, referenceId: string): Promise<void> {
@@ -50,10 +50,10 @@ export class Disbursements {
   }
 
   /**
-   * Récupère le statut d'un transfert.
+   * Get the status of a transfer.
    *
-   * @param referenceId - UUID de la transaction (celui passé à transfer)
-   * @returns Statut complet de la transaction
+   * @param referenceId - Transaction UUID (the one passed to transfer)
+   * @returns Full transaction status
    *
    * @example
    * const status = await momo.disbursements.getTransactionStatus(refId)
@@ -66,9 +66,9 @@ export class Disbursements {
   }
 
   /**
-   * Consulte le solde du portefeuille Disbursements.
+   * Get the Disbursements wallet balance.
    *
-   * @returns Solde disponible et devise
+   * @returns Available balance and currency
    *
    * @example
    * const balance = await momo.disbursements.getBalance()
@@ -79,15 +79,15 @@ export class Disbursements {
   }
 
   /**
-   * Vérifie si un compte MoMo est actif avant d'envoyer un transfert.
+   * Check if an MoMo account is active before sending a transfer.
    *
-   * @param partyIdType - Type d'identifiant (MSISDN | EMAIL | PARTY_CODE)
-   * @param partyId - Valeur de l'identifiant
-   * @returns true si le compte est actif, false sinon
+   * @param partyIdType - Identifier type (MSISDN | EMAIL | PARTY_CODE)
+   * @param partyId - Identifier value
+   * @returns true if the account is active, false otherwise
    *
    * @example
-   * const actif = await momo.disbursements.isAccountHolderActive('MSISDN', '256772123456')
-   * if (!actif.result) console.log('Compte inactif')
+   * const active = await momo.disbursements.isAccountHolderActive('MSISDN', '256772123456')
+   * if (!active.result) console.log('Inactive account')
    */
   async isAccountHolderActive(partyIdType: string, partyId: string): Promise<AccountHolderStatus> {
     return this.client.get<AccountHolderStatus>(
@@ -96,11 +96,11 @@ export class Disbursements {
   }
 
   /**
-   * Récupère les informations de base d'un utilisateur MoMo.
+   * Get basic user info from an MoMo account.
    *
-   * @param partyIdType - Type d'identifiant (MSISDN | EMAIL | PARTY_CODE)
-   * @param partyId - Valeur de l'identifiant
-   * @returns Informations personnelles de l'utilisateur
+   * @param partyIdType - Identifier type (MSISDN | EMAIL | PARTY_CODE)
+   * @param partyId - Identifier value
+   * @returns Basic personal information
    *
    * @example
    * const info = await momo.disbursements.getBasicUserInfo('MSISDN', '256772123456')
@@ -113,10 +113,10 @@ export class Disbursements {
   }
 
   /**
-   * Consulte le solde Disbursements dans une devise spécifique.
+   * Get the Disbursements wallet balance in a specific currency.
    *
-   * @param currency - Code devise (ex: "EUR", "USD", "XAF")
-   * @returns Solde disponible dans la devise demandée
+   * @param currency - Currency code (e.g. "EUR", "USD", "XAF")
+   * @returns Balance in the requested currency
    *
    * @example
    * const balance = await momo.disbursements.getBalanceInCurrency('EUR')
