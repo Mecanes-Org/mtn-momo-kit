@@ -17,6 +17,13 @@ export class HttpClient {
 
   private tokenPath: string
 
+  /**
+   * @param apiUser - UUID v4 de l'API User
+   * @param apiKey - API Key générée
+   * @param subscriptionKey - Primary Key du produit
+   * @param environment - sandbox | production
+   * @param tokenPath - Chemin du endpoint OAuth2 (ex: /collection/token/)
+   */
   constructor(apiUser: string, apiKey: string, subscriptionKey: string, environment: string, tokenPath: string) {
     this.apiUser = apiUser
     this.apiKey = apiKey

@@ -9,11 +9,37 @@ const BASE_URLS: Record<string, string> = {
   production: 'https://momoapi.mtn.com',
 }
 
+/**
+ * Point d'entrée principal du SDK MTN MoMo.
+ * Initialise les trois produits : Collections, Disbursements, Remittances.
+ *
+ * @example
+ * const momo = new Momo({
+ *   subscriptionKey: '...',
+ *   apiUser: '...',
+ *   apiKey: '...',
+ *   environment: 'sandbox',
+ * })
+ *
+ * await momo.collections.requestToPay(params, referenceId)
+ * await momo.disbursements.transfer(params, referenceId)
+ */
 export class Momo {
   readonly collections: Collections
   readonly disbursements: Disbursements
   readonly remittances: Remittances
 
+  /**
+   * @param config - Configuration complète du SDK
+   * @param config.subscriptionKey - Primary Key par défaut (tous produits)
+   * @param config.collectionSubscriptionKey - Primary Key Collections seulement
+   * @param config.disbursementSubscriptionKey - Primary Key Disbursements seulement
+   * @param config.remittanceSubscriptionKey - Primary Key Remittances seulement
+   * @param config.apiUser - UUID v4 de l'API User
+   * @param config.apiKey - API Key générée
+   * @param config.environment - 'sandbox' (défaut) | 'production'
+   * @param config.callbackHost - URL de callback pour les webhooks (optionnel)
+   */
   constructor(config: MomoConfig) {
     const env = config.environment ?? 'sandbox'
 
@@ -28,6 +54,20 @@ export class Momo {
     )
   }
 
+  /**
+   * Crée un API User sur le portail MTN.
+   * Étape préliminaire obligatoire (sandbox) avant d'utiliser le SDK.
+   *
+   * @param subscriptionKey - Primary Key du produit
+   * @param referenceId - UUID v4 qui deviendra votre apiUser
+   * @param callbackHost - URL où MTN enverra les notifications
+   * @param environment - 'sandbox' (défaut) | 'production'
+   *
+   * @example
+   * const ref = uuid()
+   * await Momo.createApiUser('primary_key', ref, 'https://mon-site.com/webhook')
+   * console.log('API User:', ref)
+   */
   static async createApiUser(
     subscriptionKey: string,
     referenceId: string,
@@ -49,6 +89,19 @@ export class Momo {
     }
   }
 
+  /**
+   * Génère une API Key pour un API User existant.
+   * À appeler après createApiUser().
+   *
+   * @param subscriptionKey - Primary Key du produit
+   * @param referenceId - UUID de l'API User (le même que createApiUser)
+   * @param environment - 'sandbox' (défaut) | 'production'
+   * @returns L'API Key à conserver précieusement
+   *
+   * @example
+   * const apiKey = await Momo.generateApiKey('primary_key', ref)
+   * console.log('API Key:', apiKey)
+   */
   static async generateApiKey(
     subscriptionKey: string,
     referenceId: string,
@@ -68,6 +121,22 @@ export class Momo {
     return body.apiKey
   }
 
+  /**
+   * Valide et parse un payload webhook envoyé par MTN.
+   * Utilisez cette méthode dans votre endpoint /webhook pour vérifier
+   * l'intégrité des notifications de transaction.
+   *
+   * @param body - Corps brut de la requête webhook (req.body)
+   * @returns MomoWebhookPayload valide ou null si invalide
+   *
+   * @example
+   * app.post('/webhook', (req, res) => {
+   *   const payload = Momo.parseWebhookPayload(req.body)
+   *   if (!payload) return res.status(400).send('Invalide')
+   *   console.log(payload.status) // SUCCESSFUL | FAILED | PENDING
+   *   res.status(200).send('OK')
+   * })
+   */
   static parseWebhookPayload(body: unknown): MomoWebhookPayload | null {
     if (!body || typeof body !== 'object') return null
     const data = body as Record<string, unknown>
