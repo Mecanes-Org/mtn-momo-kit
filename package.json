@@ -1,6 +1,6 @@
 {
   "name": "mtn-momo-kit",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Cross-platform TypeScript kit for the MTN MoMo API (Collections, Disbursements, Remittances). Works with Node.js, React Native, Expo, and browsers.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
