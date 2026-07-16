@@ -1,6 +1,10 @@
-# MTN MoMo SDK
+# MTN MoMo Kit
 
-Universal TypeScript SDK for the MTN Mobile Money (MoMo) API. Compatible with **Node.js**, **React Native**, **Expo**, and **browsers (Vite, Next.js, etc.)**.
+[![npm version](https://img.shields.io/npm/v/mtn-momo-kit)](https://www.npmjs.com/package/mtn-momo-kit)
+[![npm downloads](https://img.shields.io/npm/dm/mtn-momo-kit)](https://www.npmjs.com/package/mtn-momo-kit)
+[![License](https://img.shields.io/npm/l/mtn-momo-kit)](https://www.npmjs.com/package/mtn-momo-kit)
+
+Universal TypeScript Kit for the MTN Mobile Money (MoMo) API. Compatible with **Node.js**, **React Native**, **Expo**, and **browsers (Vite, Next.js, etc.)**.
 
 ## Table of Contents
 
@@ -43,13 +47,13 @@ Before you start, make sure you have:
 npm install mtn-momo-kit
 ```
 
-The SDK only depends on `base-64` (1kB) for cross-platform Base64 encoding. All other APIs used (`fetch`, `crypto`) are native, available in Node.js 18+, React Native 0.71+, and all modern browsers.
+The Kit only depends on `base-64` (1kB) for cross-platform Base64 encoding. All other APIs used (`fetch`, `crypto`) are native, available in Node.js 18+, React Native 0.71+, and all modern browsers.
 
 ---
 
 ## Getting your credentials
 
-Before using the SDK, you need to get your API credentials from MTN. Follow these steps:
+Before using the Kit, you need to get your API credentials from MTN. Follow these steps:
 
 ### 1. Create an account
 
@@ -90,7 +94,7 @@ Secondary Key:  8a3f1b2c3d4e5f6a7b8c9d0e1f2a3b4c
 You have two options:
 
 <details>
-<summary><b>Option A — With the SDK (recommended)</b></summary>
+<summary><b>Option A — With the Kit (recommended)</b></summary>
 
 ```ts
 import { v4 as uuid } from 'uuid'
@@ -155,7 +159,7 @@ console.log(`${balance.availableBalance} ${balance.currency}`)
 
 ## Provisioning
 
-Before using the SDK, you need an **API User** and an **API Key**. In the sandbox environment, you can create them directly with the SDK. In production, MTN provides them after KYC.
+Before using the Kit, you need an **API User** and an **API Key**. In the sandbox environment, you can create them directly with the Kit. In production, MTN provides them after KYC.
 
 > ⚠️ **Important**: Each product (Collections, Disbursements, Remittances) has its own **Primary Key**. Subscribe to each product separately on [momodeveloper.mtn.com](https://momodeveloper.mtn.com). A Disbursements Primary Key will **not** work on Collections endpoints (`momo.collections.*`).
 
@@ -213,7 +217,7 @@ async function setup() {
   const apiKey = await Momo.generateApiKey('YOUR_SUBSCRIPTION_KEY', ref)
   console.log('API Key:', apiKey)
 
-  // Step 3 — Use the SDK
+  // Step 3 — Use the Kit
   const momo = new Momo({
     subscriptionKey: 'YOUR_SUBSCRIPTION_KEY',
     apiUser: ref,
@@ -612,7 +616,7 @@ Same parameters as `requestToPay` (except `payer` → `payee`).
 
 ## Sandbox Testing
 
-### Provision credentials with the SDK
+### Provision credentials with the Kit
 
 ```ts
 import { v4 as uuid } from 'uuid'
@@ -631,7 +635,7 @@ async function sandboxSetup() {
   // 2. Generate API Key
   const apiKey = await Momo.generateApiKey('YOUR_SUBSCRIPTION_KEY', ref)
 
-  // 3. Initialize the SDK
+  // 3. Initialize the Kit
   const momo = new Momo({
     subscriptionKey: 'YOUR_SUBSCRIPTION_KEY',
     apiUser: ref,
@@ -718,19 +722,19 @@ try {
 
 ### Token management
 
-The SDK automatically handles OAuth2 token acquisition and renewal. The token is fetched **lazily** (on the first API call) and cached for subsequent requests. No manual action required.
+The Kit automatically handles OAuth2 token acquisition and renewal. The token is fetched **lazily** (on the first API call) and cached for subsequent requests. No manual action required.
 
 ---
 
 ## FAQ
 
-### Does this SDK work with React Native?
+### Does this Kit work with React Native?
 
 Yes. It only uses `fetch` (available since RN 0.71+) and `base-64` (cross-platform Base64). No dependency on Node.js native modules (`fs`, `crypto`, `path`, `stream`).
 
 ### Can I use it in a browser?
 
-Yes. The SDK works in all modern browsers that support `fetch`.
+Yes. The Kit works in all modern browsers that support `fetch`.
 
 ### How do I handle callbacks/notifications?
 
@@ -742,7 +746,7 @@ No. Test numbers may vary by country. Check the official MTN documentation for y
 
 ### Is the exchange rate included?
 
-No. The SDK processes amounts in the specified currency. Currency conversion is handled by MTN at their current rate.
+No. The Kit processes amounts in the specified currency. Currency conversion is handled by MTN at their current rate.
 
 ---
 
