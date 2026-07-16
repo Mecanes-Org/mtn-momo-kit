@@ -40,7 +40,7 @@ Avant de commencer, assurez-vous d'avoir :
 ## Installation
 
 ```bash
-npm install mtn-momo-sdk
+npm install mtn-momo-kit
 ```
 
 Le SDK dépend uniquement de `base-64` (1kB) pour l'encodage Base64 multiplateforme. Les autres APIs (`fetch`, `crypto`) sont natives, disponibles dans Node.js 18+, React Native 0.71+, et tous les navigateurs modernes.
@@ -94,7 +94,7 @@ Deux options :
 
 ```ts
 import { v4 as uuid } from 'uuid'
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 // Créer l'API User
 const apiUser = uuid()
@@ -133,7 +133,7 @@ apiKey          → Clé de l'étape 4
 ## Démarrage rapide
 
 ```ts
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 const momo = new Momo({
   subscriptionKey: 'votre_clé_primaire',           // Clé par défaut
@@ -163,7 +163,7 @@ Avant d'utiliser le SDK, vous avez besoin d'un **API User** et d'une **API Key**
 
 ```ts
 import { v4 as uuid } from 'uuid'
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 const referenceId = uuid()
 
@@ -201,7 +201,7 @@ console.log('API Key :', apiKey)
 
 ```ts
 import { v4 as uuid } from 'uuid'
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 async function setup() {
   const ref = uuid()
@@ -361,7 +361,7 @@ const momo = new Momo({
 ## Utilisation
 
 ```ts
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 const momo = new Momo({
   subscriptionKey: 'votre_clé_primaire',
@@ -499,7 +499,7 @@ const solde = await momo.remittances.getBalance()
 MTN MoMo envoie des notifications asynchrones de changement de statut à votre `callbackHost`. Utilisez `Momo.parseWebhookPayload()` pour valider et parser les requêtes entrantes.
 
 ```ts
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 // Exemple : endpoint webhook avec Express.js
 app.post('/webhook', (req, res) => {
@@ -617,7 +617,7 @@ Mêmes paramètres que `requestToPay` (sauf `payer` → `payee`).
 
 ```ts
 import { v4 as uuid } from 'uuid'
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 async function sandboxSetup() {
   const ref = uuid()
@@ -691,7 +691,7 @@ const momo = new Momo({
 ## Gestion des erreurs
 
 ```ts
-import { Momo } from 'mtn-momo-sdk'
+import { Momo } from 'mtn-momo-kit'
 
 const momo = new Momo(config)
 
