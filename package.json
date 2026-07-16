@@ -14,8 +14,23 @@
     "type": "git",
     "url": "git+https://github.com/Mecanes-Org/mtn-momo-kit.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+  "mtn",
+  "momo",
+  "mobile-money",
+  "mtn-momo",
+  "payments",
+  "collections",
+  "disbursements",
+  "remittances",
+  "sdk",
+  "api",
+  "typescript",
+  "cross-platform",
+  "react-native",
+  "expo"
+],
+  "author": "mecanes",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
