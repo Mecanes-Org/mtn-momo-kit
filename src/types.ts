@@ -78,11 +78,6 @@ export interface BasicUserInfo {
   email?: string
 }
 
-export interface MomoError {
-  code: string
-  message: string
-}
-
 export interface MomoWebhookPayload {
   referenceId: string
   status: 'SUCCESSFUL' | 'FAILED' | 'PENDING'
