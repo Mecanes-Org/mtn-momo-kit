@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "test": "npx tsx src/test-collections.ts",
+    "test:collections": "npx tsx src/test-collections.ts",
     "test:disbursements": "npx tsx src/test-disbursements.ts"
   },
   "repository": {

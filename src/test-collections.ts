@@ -3,11 +3,11 @@ import { v4 as uuid } from 'uuid'
 import { Momo } from './index.js'
 import type { MomoWebhookPayload } from './types.js'
 
-const PRIMARY_KEY = process.env.MOMO_SUBSCRIPTION_KEY!
+const PRIMARY_KEY = process.env.MOMO_COLLECTION_KEY ?? process.env.MOMO_SUBSCRIPTION_KEY!
 const CALLBACK_HOST = process.env.MOMO_CALLBACK_HOST ?? 'https://mon-site.com/webhook'
 
 if (!PRIMARY_KEY) {
-  console.error('ERREUR : Définissez MOMO_SUBSCRIPTION_KEY dans .env')
+  console.error('ERREUR : Définissez MOMO_COLLECTION_KEY ou MOMO_SUBSCRIPTION_KEY dans .env')
   process.exit(1)
 }
 
@@ -44,7 +44,7 @@ async function usage() {
   await momo.collections.requestToPay(
     {
       amount: '100',
-      currency: 'EUR',
+      currency: 'XAF',
       externalId: 'test-001',
       payer: { partyIdType: 'MSISDN', partyId: '256772123456' },
     },
@@ -69,7 +69,7 @@ function webhookDemo() {
     referenceId: uuid(),
     status: 'SUCCESSFUL',
     amount: '5000',
-    currency: 'EUR',
+    currency: 'XAF',
     financialTransactionId: 'MTN123456',
     externalId: 'facture-001',
     payer: {

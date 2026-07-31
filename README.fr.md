@@ -242,11 +242,16 @@ setup().catch(console.error)
 Créez un fichier `.env` à la racine du projet :
 
 ```env
-MOMO_SUBSCRIPTION_KEY=votre_clé_primaire
-MOMO_API_USER=votre_api_user
-MOMO_API_KEY=votre_api_key
-MOMO_ENVIRONMENT=sandbox
-MOMO_CALLBACK_HOST=https://votre-site.com/webhook
+# Au moins une clé de souscription est requise
+MOMO_SUBSCRIPTION_KEY=votre_clé_primaire                # Clé par défaut pour tous les produits
+MOMO_COLLECTION_KEY=votre_clé_collections                # Clé Collections (remplace SUBSCRIPTION)
+MOMO_DISBURSEMENTS_KEY=votre_clé_disbursements           # Clé Disbursements (remplace SUBSCRIPTION)
+MOMO_REMITTANCE_KEY=votre_clé_remittances                # Clé Remittances (remplace SUBSCRIPTION)
+
+MOMO_API_USER=votre_api_user                             # API User UUID
+MOMO_API_KEY=votre_api_key                               # API Key
+MOMO_ENVIRONMENT=sandbox                                 # sandbox | production
+MOMO_CALLBACK_HOST=https://votre-site.com/webhook        # URL de callback webhook
 ```
 
 ### Lecture du `.env` selon la plateforme

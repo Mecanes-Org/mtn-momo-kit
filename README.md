@@ -76,8 +76,8 @@ Once logged in, click on **Products** and subscribe to the product you need:
 After subscribing, go to your **Profile** (top-right menu) → scroll down to the bottom of the page. You will see your product keys:
 
 ```
-Primary Key:    d7de09f262644dfda901161d97d741a6
-Secondary Key:  8a3f1b2c3d4e5f6a7b8c9d0e1f2a3b4c
+Primary Key:    xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Secondary Key:  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 | Key | Usage |
@@ -241,11 +241,16 @@ setup().catch(console.error)
 Create a `.env` file at your project root:
 
 ```env
-MOMO_SUBSCRIPTION_KEY=your_primary_key
-MOMO_API_USER=your_api_user
-MOMO_API_KEY=your_api_key
-MOMO_ENVIRONMENT=sandbox
-MOMO_CALLBACK_HOST=https://your-site.com/webhook
+# At least one subscription key is required
+MOMO_SUBSCRIPTION_KEY=your_primary_key                 # Default key for all products
+MOMO_COLLECTION_KEY=your_collection_key                 # Collections key (overrides SUBSCRIPTION)
+MOMO_DISBURSEMENTS_KEY=your_disbursement_key            # Disbursements key (overrides SUBSCRIPTION)
+MOMO_REMITTANCE_KEY=your_remittance_key                 # Remittances key (overrides SUBSCRIPTION)
+
+MOMO_API_USER=your_api_user                             # API User UUID
+MOMO_API_KEY=your_api_key                               # API Key
+MOMO_ENVIRONMENT=sandbox                                # sandbox | production
+MOMO_CALLBACK_HOST=https://your-site.com/webhook        # Webhook callback URL
 ```
 
 ### Reading `.env` by platform

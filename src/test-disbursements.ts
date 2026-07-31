@@ -6,7 +6,7 @@ const PRIMARY_KEY = process.env.MOMO_DISBURSEMENTS_KEY ?? process.env.MOMO_SUBSC
 const CALLBACK_HOST = process.env.MOMO_CALLBACK_HOST ?? 'https://mon-site.com/webhook'
 
 if (!PRIMARY_KEY) {
-  console.error('ERREUR : Définissez MOMO_SUBSCRIPTION_KEY ou MOMO_DISBURSEMENTS_KEY dans .env')
+  console.error('ERREUR : Définissez MOMO_DISBURSEMENTS_KEY ou MOMO_SUBSCRIPTION_KEY dans .env')
   process.exit(1)
 }
 
@@ -41,7 +41,7 @@ async function main() {
   await momo.disbursements.transfer(
     {
       amount: '500',
-      currency: 'EUR',
+      currency: 'XAF',
       externalId: 'remb-001',
       payee: { partyIdType: 'MSISDN', partyId: '256772123456' },
       payeeNote: 'Remboursement commande #123',
